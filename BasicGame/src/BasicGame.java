@@ -38,10 +38,13 @@ public class BasicGame {
 				boolean powerUpActive = false;
 				int powerUpActiveCounter = 0;
 		
+		GameResult gameResult = GameResult.TIE;
+		
 		//iranyvaltoztatos logika
 		for (int iterationNumber = 1; iterationNumber <= GAME_LOOP_NUMBER; iterationNumber++) {
 			//jatekos leptetese
 			if(powerUpActive) {
+				playerDirection = changeDirectionTowards(level, playerDirection, playerRow,playerColumn, enemyRow, enemyColumn);
 			}else {
 				if(iterationNumber % 15 == 0) {
 				playerDirection = changeDirection(playerDirection);
@@ -56,7 +59,12 @@ public class BasicGame {
 //			if(iterationNumber % 10 == 0) {
 //				enemyDirection = changeDirection(enemyDirection);
 //			}
-			enemyDirection = changeEnemyDirection(level,enemyDirection, playerRow, playerColumn, enemyRow, enemyColumn);
+			if(powerUpActive) {
+				Direction directionTowardsPlayer= changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
+				enemyDirection = getEscapeDirection(level, enemyRow, enemyColumn, directionTowardsPlayer);
+			}else {
+				enemyDirection = changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
+			}
 			if(iterationNumber % 2 == 0) {
 			int[] enemyCoordinates = makeMove(enemyDirection, level,enemyRow, enemyColumn);//makeMove metodus meghivasa
 			enemyRow = enemyCoordinates[0];
@@ -79,6 +87,10 @@ public class BasicGame {
 				powerUpPresentOnLevel = !powerUpPresentOnLevel;
 				powerUpPresenceCounter = 0;
 			}
+			if (powerUpActiveCounter >= 20) {
+				powerUpActive = false;
+				powerUpActiveCounter = 0;
+			}
 			
 			//	jatekos powerUp interakcio lekezelese
 			if (powerUpPresentOnLevel && playerRow == powerUpRow && playerColumn == powerUpColumn) {
@@ -93,12 +105,87 @@ public class BasicGame {
 			//szeparator kirajzolasa es varakozas
 			addSomeDelay(200L,iterationNumber);
 			
+			//jatekos azonos koordinatakon
 			if(playerRow == enemyRow && playerColumn == enemyColumn) {
+				if (powerUpActive) {
+					gameResult = GameResult.WIN;
+				}else {
+					gameResult = GameResult.LOSE;
+				}
 				break;
 			}
 		}
-		System.out.println(" GAME OVER ");
+		switch (gameResult) {
+		case WIN:
+		  System.out.println("Gratulalok! GAME OVER! ");
+		break;
+		case LOSE:
+		  System.out.println(" Sajnalom,vesztettel! ");
+		break;
+		case TIE:
+			 System.out.println("Döntetlen! ");
+		break;
+		}
+	}		
+	static Direction getEscapeDirection(String[][] level, int enemyRow, int enemyColumn,
+			Direction directionTowardsPlayer) {
+		Direction escapeDirection = getOppositeDirection(directionTowardsPlayer);
+		switch (escapeDirection) {
+		case UP: 
+			if (level[enemyRow-1][enemyColumn].equals(" ")){
+			return Direction.UP;
+		}else if (level[enemyRow][enemyColumn-1].equals(" ")){
+			return Direction.LEFT;
+		}else if (level[enemyRow][enemyColumn+1].equals(" ")){
+			return Direction.RIGHT;
+		}else {
+			return Direction.UP; 
+		}
+		case DOWN: 
+			if (level[enemyRow+1][enemyColumn].equals(" ")){
+				return Direction.DOWN;
+			}else if (level[enemyRow][enemyColumn-1].equals(" ")){
+				return Direction.LEFT;
+			}else if (level[enemyRow][enemyColumn+1].equals(" ")){
+				return Direction.RIGHT;
+			}else {
+				return Direction.DOWN; 
+			}
+		case RIGHT: 
+			if (level[enemyRow][enemyColumn+1].equals(" ")){
+				return Direction.RIGHT;
+			}else if (level[enemyRow-1][enemyColumn].equals(" ")){
+				return Direction.UP;
+			}else if (level[enemyRow+1][enemyColumn].equals(" ")){
+				return Direction.DOWN;
+			}else {
+				return Direction.RIGHT; 
+			}
+		case LEFT: 
+			if (level[enemyRow][enemyColumn-1].equals(" ")){
+				return Direction.LEFT;
+			}else if (level[enemyRow-1][enemyColumn].equals(" ")){
+				return Direction.UP;
+			}else if (level[enemyRow+1][enemyColumn].equals(" ")){
+				return Direction.DOWN;
+			}else {
+				return Direction.LEFT; 
+			}
+		default:
+			return escapeDirection;
+		}
 	}
+
+	static Direction getOppositeDirection(Direction direction) {
+		 switch (direction) {
+			case UP: return Direction.DOWN;
+			case DOWN: return Direction.UP;
+			case RIGHT: return Direction.LEFT;
+			case LEFT: return Direction.RIGHT;
+			default:
+				return direction;
+			}		
+		}
 
 /*--------METODUSOK----------------*/
 	static int[]  getRandomStartingCoordinatesAtLeastCertainDistance(String[][] level, int[] playerStartingCoordinates, int distance) {
@@ -135,7 +222,7 @@ public class BasicGame {
 
 
 
-	static Direction changeEnemyDirection( String [] [] level, Direction originalEnemyDirection, int playerRow, int playerColumn, int enemyRow, int enemyColumn) {
+	static Direction changeDirectionTowards( String [] [] level, Direction originalEnemyDirection, int enemyRow, int enemyColumn, int playerRow, int playerColumn ) {
 		if(playerRow < enemyRow && level[enemyRow-1][enemyColumn].equals(" ")) {
 		return Direction.UP;
 		}
@@ -275,9 +362,7 @@ public class BasicGame {
 			System.out.println();	
 			}			
 		}
-	//---------------METODUS OVERLOADING---------------
-	//amikor pontosan ua. a neve, csak mas a parameterlistaja
-				
+					
 }
 		
 
