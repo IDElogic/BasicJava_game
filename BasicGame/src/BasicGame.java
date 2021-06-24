@@ -9,30 +9,43 @@ public class BasicGame {
 	static final Random RANDOM = new Random	();
 
 	public static void main(String[] args) throws InterruptedException {
-		
-		
+		//palya inicializalasa
+				String [][] level = new String [HEIGHT][WIDTH];//helyi valtozo(metoduson belul van letrehozva)
+				initlevel(level); //initlevel metodus meghivas(bemeneti parameterei)
+				
+				addRandomWalls(level);	
+				
 		String playerMark = "O";//string tipusu helyi valtozo, inicializalva a nagy O beture
-		int playerRow = 2;//helyi valtozo
-		int playerColumn = 2;//helyi valtozo
+		int [] playerStartingCoordinates = getRandomStartingCoordinates(level);
+		int playerRow = playerStartingCoordinates[0];//helyi valtozo
+		int playerColumn = playerStartingCoordinates[1];//helyi valtozo
 		Direction playerDirection = Direction.RIGHT;//helyi valtozo (enum tipusa es a konstansa		
 		
 		//masik jatekos
 		String enemyMark = "-";
-		int enemyRow = 7;
-		int enemyColumn = 4;
+		int [] enemyStartingCoordinates =  getRandomStartingCoordinatesAtLeastCertainDistance(level,playerStartingCoordinates, playerColumn);
+		int enemyRow = enemyStartingCoordinates[0];//helyi valtozo
+		int enemyColumn = enemyStartingCoordinates[1];//helyi valtozo
 		Direction enemyDirection = Direction.LEFT;	
-			
-		//palya inicializalasa
-		String [][] level = new String [HEIGHT][WIDTH];//helyi valtozo(metoduson belul van letrehozva)
-		initlevel(level); //initlevel metodus meghivas(bemeneti parameterei)
 		
-		addRandomWalls(level);
+		//powerUp
+				String powerUpMark = "*";
+				int [] powerUpStartingCoordinates = getRandomStartingCoordinates(level);
+				int powerUpRow = powerUpStartingCoordinates[0];//helyi valtozo
+				int powerUpColumn = powerUpStartingCoordinates[1];//helyi valtozo
+				boolean powerUpPresentOnLevel = false;
+				int powerUpPresenceCounter = 0;
+				boolean powerUpActive = false;
+				int powerUpActiveCounter = 0;
 		
 		//iranyvaltoztatos logika
 		for (int iterationNumber = 1; iterationNumber <= GAME_LOOP_NUMBER; iterationNumber++) {
 			//jatekos leptetese
-			if(iterationNumber % 15 == 0) {
+			if(powerUpActive) {
+			}else {
+				if(iterationNumber % 15 == 0) {
 				playerDirection = changeDirection(playerDirection);
+				}
 			}
 			//mozgatast vegzo logika
 			int[] playerCoordinates = makeMove(playerDirection, level, playerRow, playerColumn);//makeMove metodus meghivasa
@@ -49,8 +62,33 @@ public class BasicGame {
 			enemyRow = enemyCoordinates[0];
 			enemyColumn = enemyCoordinates[1];
 			}
+			
+			
+			//powerUp frissitese
+			if (powerUpActive) {
+				powerUpActiveCounter++;
+			} else {
+				powerUpPresenceCounter++;
+			}
+			if(powerUpPresenceCounter >= 20) {
+				if (powerUpPresentOnLevel) {
+					powerUpStartingCoordinates = getRandomStartingCoordinates(level);
+					powerUpRow = powerUpStartingCoordinates[0];//helyi valtozo
+					powerUpColumn = powerUpStartingCoordinates[1];//helyi valtozo
+				}
+				powerUpPresentOnLevel = !powerUpPresentOnLevel;
+				powerUpPresenceCounter = 0;
+			}
+			
+			//	jatekos powerUp interakcio lekezelese
+			if (powerUpPresentOnLevel && playerRow == powerUpRow && playerColumn == powerUpColumn) {
+				powerUpActive = true;
+				powerUpPresentOnLevel = false;
+				powerUpPresenceCounter = 0;
+				
+			}
 			//palya es jatekos kirajzolasa
-			draw(level, playerMark, playerRow, playerColumn,enemyMark,enemyRow,enemyColumn);//draw metodus meghivasa
+			draw(level, playerMark, playerRow, playerColumn,enemyMark,enemyRow,enemyColumn, powerUpMark, powerUpRow, powerUpColumn, powerUpPresentOnLevel );//draw metodus meghivasa
 			
 			//szeparator kirajzolasa es varakozas
 			addSomeDelay(200L,iterationNumber);
@@ -61,11 +99,42 @@ public class BasicGame {
 		}
 		System.out.println(" GAME OVER ");
 	}
-		
-
 
 /*--------METODUSOK----------------*/
-	
+	static int[]  getRandomStartingCoordinatesAtLeastCertainDistance(String[][] level, int[] playerStartingCoordinates, int distance) {
+		int playerStartingRow = playerStartingCoordinates [0];
+		int playerStartingColumn = playerStartingCoordinates [1];
+		int randomRow;
+		int randomColumn;
+		int counter = 0;
+		do {
+			randomRow = RANDOM.nextInt(HEIGHT);
+			randomColumn = RANDOM.nextInt(WIDTH);	
+		} while(counter++ < 1_000 
+				&& (!level[randomRow][randomColumn].equals(" ") || calculateDistance(randomRow, randomColumn, playerStartingRow, playerStartingColumn)<10));
+		return new int [] {randomRow,randomColumn};
+		
+	}
+
+	static int calculateDistance(int row1, int column1, int row2,
+			int column2) {
+		int rowDifference = Math.abs(row1 -row2);
+		int columnDifference = Math.abs(column1 -column2);
+		return rowDifference + columnDifference ;
+	}
+
+	static int[] getRandomStartingCoordinates(String[][] level) {
+		int randomRow;
+		int randomColumn;
+		do {
+			randomRow = RANDOM.nextInt(HEIGHT);
+			randomColumn = RANDOM.nextInt(WIDTH);	
+		} while(!level[randomRow][randomColumn].equals(" "));
+		return new int [] {randomRow,randomColumn};
+	}
+
+
+
 	static Direction changeEnemyDirection( String [] [] level, Direction originalEnemyDirection, int playerRow, int playerColumn, int enemyRow, int enemyColumn) {
 		if(playerRow < enemyRow && level[enemyRow-1][enemyColumn].equals(" ")) {
 		return Direction.UP;
@@ -85,7 +154,7 @@ public class BasicGame {
 	//---------------METODUS OVERLOADING---------------
 	//amikor pontosan ua. a neve, csak mas a parameterlistaja
 	static void addRandomWalls(String [][] level) {
-		addRandomWalls(level, 1, 1);
+		addRandomWalls(level, 3, 2);
 	}
 	
 	static void addRandomWalls(String [][] level, int numberOfHorizontalWalls,int numberOfVerticalWalls) {
@@ -101,7 +170,7 @@ public class BasicGame {
 	static void addHorizontalWall(String [][] level) {
 		
 		int wallWidth = RANDOM.nextInt(WIDTH -3);	
-		int wallRow = RANDOM.nextInt(HEIGHT -2)+1;
+		int wallRow = RANDOM.nextInt(HEIGHT -2) + 1;
 		int wallColumn = RANDOM.nextInt(WIDTH-2 -wallWidth);
 		for (int i = 0; i < wallWidth; i++ ) {
 			level [wallRow][wallColumn+i]= "X";
@@ -190,13 +259,15 @@ public class BasicGame {
 		}
 		
 		//palya es jatekos kirajzolasa
-		static void draw(String [][] board, String playerMark, int playerRow, int playerColumn,String enemyMark, int enemyRow,int enemyColumn){
+		static void draw(String [][] board, String playerMark, int playerRow, int playerColumn,String enemyMark, int enemyRow,int enemyColumn,String powerUpMark,int powerUpRow,int powerUpColumn,boolean powerUpPresentOnLevel){
 			for (int row = 0; row < HEIGHT; row++) {
 				for (int column = 0;column < WIDTH; column++) {
 					if(row == playerRow && column == playerColumn) {		
 					System.out.print(playerMark);
 				} else if (row == enemyRow && column == enemyColumn){
 					System.out.print(enemyMark);
+				} else if (powerUpPresentOnLevel && row == powerUpRow && column == powerUpColumn){
+					System.out.print(powerUpMark);
 				}	else {
 				   System.out.print(board[row][column]);
 				}
@@ -204,10 +275,9 @@ public class BasicGame {
 			System.out.println();	
 			}			
 		}
-//---------------METODUS OVERLOADING---------------
-//amikor pontosan ua. a neve, csak mas a parameterlistaja
-		
-		
+	//---------------METODUS OVERLOADING---------------
+	//amikor pontosan ua. a neve, csak mas a parameterlistaja
+				
 }
 		
 
