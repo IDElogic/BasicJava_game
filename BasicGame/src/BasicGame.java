@@ -12,10 +12,10 @@ public class BasicGame {
 	public static void main(String[] args) throws InterruptedException {
 		//palya inicializalasa
 				String [][] level = new String [HEIGHT][WIDTH];//helyi valtozo(metoduson belul van letrehozva)
-				
+				do {
 				initlevel(level); //initlevel metodus meghivas(bemeneti parameterei)	
 				addRandomWalls(level);	
-				
+				}while (!isPassable(level));
 				
 		String playerMark = "O";//string tipusu helyi valtozo, inicializalva a nagy O beture
 		int [] playerStartingCoordinates = getRandomStartingCoordinates(level);
@@ -138,13 +138,64 @@ public class BasicGame {
 			}
 	
 		static boolean isPassable(String[][] level) {
-			String[][] levelCopy = copy(level);
-		return false;
+			//palya lemasolasa
+			String [][] levelCopy = copy(level);
+			//megkeresem, hogy hol van az elsö szoköz
+			outer: for (int row=0; row<HEIGHT; row++) {
+				for(int column=0; column<WIDTH; column++) {
+					if(" ".equals(levelCopy[row][column])) {
+						levelCopy[row][column]= "*";
+						break outer;
+					}
+				}
+			}
+			//*ok terjesztese a szabad helyekre
+			for (int row = 0; row < HEIGHT; row++) {
+				for(int column = 0; column < WIDTH; column++) {
+					boolean change = false;
+					if("*".equals(levelCopy[row][column])) {
+						if(" ".equals(levelCopy[row-1][column])) {
+							levelCopy[row-1][column] = "*";
+							change = true;
+						}
+						if(" ".equals(levelCopy[row+1][column])) {
+							levelCopy[row+1][column] = "*";
+							change = true;
+						}
+						if(" ".equals(levelCopy[row][column-1])) {
+							levelCopy[row][column-1] = "*";
+							change= true;
+						}
+						if(" ".equals(levelCopy[row][column+1])) {
+							levelCopy[row][column+1] = "*";
+							change = true;
+						}
+					}
+					if (change) {
+						//palyamasolat kirajzolasa
+						for (int row2 = 0; row2 < HEIGHT; row2++) {
+							for (int column2 = 0;column2 < WIDTH; column2++) {
+							   System.out.print(levelCopy[row2][column2]);		
+							}
+						System.out.println();	
+						}	
+					}
+				}
+			}		
+			//program leallitasa
+			System.exit(0);
+			return false;
 		}
 
-		private static String[][] copy(String[][] level) {
-			// TODO Auto-generated method stub
-			return null;
+
+		static String[][] copy(String[][] level) {
+			String [][] copy = new String [HEIGHT][WIDTH];
+			for (int row=0; row<HEIGHT; row++) {
+				for(int column=0; column<WIDTH; column++) {
+					copy[row][column] = level [row][column];
+				}
+			}
+			return copy;
 		}
 
 		static Direction getEscapeDirection(String[][] level, int enemyRow, int enemyColumn,
