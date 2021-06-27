@@ -3,34 +3,47 @@ import java.util.Random;
 public class BasicGame {
 	
 	//osztalyon belul,(de metodusokon kivul)Osztalyvaltozok_Static ehhez fontos	
-	static final int GAME_LOOP_NUMBER = 1;//statikus meg final is: forditasi ideju konstans
+	static final int GAME_LOOP_NUMBER = 100;//statikus meg final is: forditasi ideju konstans
 	static final int HEIGHT = 40;
 	static final int WIDTH = 40;
 //	static final Random RANDOM = new Random	(100L);//álvéletlen számot general
-	static final Random RANDOM = new Random	(103L);
+	static final Random RANDOM = new Random	(100L);
 	
 	public static void main(String[] args) throws InterruptedException {
 		//palya inicializalasa
 				String [][] level = new String [HEIGHT][WIDTH];//helyi valtozo(metoduson belul van letrehozva)
+				int counter = 0;
 				do {
 				initlevel(level); //initlevel metodus meghivas(bemeneti parameterei)	
 				addRandomWalls(level);	
+				counter++;
 				}while (!isPassable(level));
+				System.out.println(counter + ". palya atjarhato");
+				isPassable(level, true);
 				
 		String playerMark = "O";//string tipusu helyi valtozo, inicializalva a nagy O beture
 		int [] playerStartingCoordinates = getRandomStartingCoordinates(level);
-		int playerRow = playerStartingCoordinates[0];//helyi valtozo
-		int playerColumn = playerStartingCoordinates[1];//helyi valtozo
+		int playerRow = playerStartingCoordinates[0];
+		int playerColumn = playerStartingCoordinates[1];		
+		int[]  playerEscapeCoordinates = getFarthestCorner(level,playerRow,playerColumn);
+		int playerEscapeRow = playerEscapeCoordinates[0];
+		int playerEscapeColumn = playerEscapeCoordinates[1];
+		
+		
 		Direction playerDirection = Direction.RIGHT;//helyi valtozo (enum tipusa es a konstansa		
 		
-		//masik jatekos
-		String enemyMark = "B";
-		int [] enemyStartingCoordinates =  getRandomStartingCoordinatesAtLeastCertainDistance(level,playerStartingCoordinates, playerColumn);
-		int enemyRow = enemyStartingCoordinates[0];//helyi valtozo
-		int enemyColumn = enemyStartingCoordinates[1];//helyi valtozo
-		Direction enemyDirection = Direction.LEFT;	
+		//ellenfel
+		String enemyMark = "ö";
+		int [] enemyStartingCoordinates =  getRandomStartingCoordinatesAtLeastCertainDistance(level,playerStartingCoordinates, 10);
+		int enemyRow = enemyStartingCoordinates[0];
+		int enemyColumn = enemyStartingCoordinates[1];
 		
-		//powerUp
+		int [] enemyEscapeCoordinates = getFarthestCorner(level,enemyRow,enemyColumn);
+		int enemyEscapeRow = enemyEscapeCoordinates[0];
+		int enemyEscapeColumn = enemyEscapeCoordinates[1];
+		Direction enemyDirection = Direction.LEFT;		
+		
+				//powerUp
 				String powerUpMark = "$";
 				int [] powerUpStartingCoordinates = getRandomStartingCoordinates(level);
 				int powerUpRow = powerUpStartingCoordinates[0];//helyi valtozo
@@ -44,16 +57,22 @@ public class BasicGame {
 		
 		//iranyvaltoztatos logika
 		for (int iterationNumber = 1; iterationNumber <= GAME_LOOP_NUMBER; iterationNumber++) {
-			//jatekos leptetese
+		//jatekos leptetese
 			if(powerUpActive) {
-				playerDirection = changeDirectionTowards(level, playerDirection, playerRow,playerColumn, enemyRow, enemyColumn);
+//				playerDirection = changeDirectionTowards(level, playerDirection, playerRow,playerColumn, enemyRow, enemyColumn);
+			playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn, enemyRow, enemyColumn);
 			}else {
 				if (powerUpPresentOnLevel) {
-					playerDirection = changeDirectionTowards(level, playerDirection, playerRow,playerColumn,powerUpRow, powerUpColumn);	
+//					playerDirection = changeDirectionTowards(level, playerDirection, playerRow,playerColumn,powerUpRow, powerUpColumn);
+					playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn,powerUpRow, powerUpColumn);
 				}else {
-					if(iterationNumber % 15 == 0) {
-						playerDirection = changeDirection(playerDirection);
-				}
+					if(iterationNumber % 50 == 0) {
+//						playerDirection = changeDirection(playerDirection);
+				playerEscapeCoordinates = getFarthestCorner(level,playerRow,playerColumn);
+				playerEscapeRow = playerEscapeCoordinates[0];
+				playerEscapeColumn = playerEscapeCoordinates[1];
+					}
+					playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn,playerEscapeRow, playerEscapeColumn);
 			  }
 			}	
 			//mozgatast vegzo logika
@@ -61,39 +80,44 @@ public class BasicGame {
 			playerRow = playerCoordinates[0];
 			playerColumn = playerCoordinates[1];
 			
-			//masik jatekos leptetese
-//			if(iterationNumber % 10 == 0) {
-//				enemyDirection = changeDirection(enemyDirection);
-//			}
+			//ellenfel leptetese
+		
 			if(powerUpActive) {
-				Direction directionTowardsPlayer= changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
-				enemyDirection = getEscapeDirection(level, enemyRow, enemyColumn, directionTowardsPlayer);
-			}else {
-				enemyDirection = changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
+//				Direction directionTowardsPlayer= changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
+//				enemyDirection = getEscapeDirection(level, enemyRow, enemyColumn, directionTowardsPlayer);
+				
+				if(iterationNumber % 50 == 0) {
+				enemyEscapeCoordinates = getFarthestCorner(level,enemyRow,enemyColumn);
+				enemyEscapeRow = enemyEscapeCoordinates[0];
+				enemyEscapeColumn = enemyEscapeCoordinates[1];
+				}
+				enemyDirection = getShortestPath(level, enemyDirection, enemyRow, enemyColumn, enemyEscapeRow, enemyEscapeColumn);
+			} else {
+//				enemyDirection = changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
+				enemyDirection = getShortestPath(level, enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);
 			}
 			if(iterationNumber % 2 == 0) {
-			int[] enemyCoordinates = makeMove(enemyDirection, level,enemyRow, enemyColumn);//makeMove metodus meghivasa
-			enemyRow = enemyCoordinates[0];
-			enemyColumn = enemyCoordinates[1];
-			}
-			
-			
+				int[] enemyCoordinates = makeMove(enemyDirection, level,enemyRow, enemyColumn);
+				enemyRow = enemyCoordinates[0];
+				enemyColumn = enemyCoordinates[1];
+				}
+				
 			//powerUp frissitese
 			if (powerUpActive) {
 				powerUpActiveCounter++;
 			} else {
 				powerUpPresenceCounter++;
 			}
-			if(powerUpPresenceCounter >= 20) {
+			if(powerUpPresenceCounter >= 60) {
 				if (powerUpPresentOnLevel) {
 					powerUpStartingCoordinates = getRandomStartingCoordinates(level);
-					powerUpRow = powerUpStartingCoordinates[0];//helyi valtozo
-					powerUpColumn = powerUpStartingCoordinates[1];//helyi valtozo
+					powerUpRow = powerUpStartingCoordinates[0];
+					powerUpColumn = powerUpStartingCoordinates[1];
 				}
 				powerUpPresentOnLevel = !powerUpPresentOnLevel;
 				powerUpPresenceCounter = 0;
 			}
-			if (powerUpActiveCounter >= 20) {
+			if (powerUpActiveCounter >= 60) {
 				powerUpActive = false;
 				powerUpActiveCounter = 0;
 				powerUpStartingCoordinates = getRandomStartingCoordinates(level);
@@ -112,7 +136,7 @@ public class BasicGame {
 			draw(level, playerMark, playerRow, playerColumn,enemyMark,enemyRow,enemyColumn, powerUpMark, powerUpRow, powerUpColumn, powerUpPresentOnLevel,powerUpActive );//draw metodus meghivasa
 			
 			//szeparator kirajzolasa es varakozas
-			addSomeDelay(200L,iterationNumber);
+			addSomeDelay(100L,iterationNumber);
 			
 			//jatekos azonos koordinatakon (elkapja az ellenfel a jatekost)
 			if(playerRow == enemyRow && playerColumn == enemyColumn) {
@@ -122,7 +146,6 @@ public class BasicGame {
 					gameResult = GameResult.LOSE;
 				}
 				break;
-			}
 			}
 			switch (gameResult) {
 			case WIN:
@@ -134,10 +157,114 @@ public class BasicGame {
 			case TIE:
 				 System.out.println("Döntetlen! ");
 			break;
+			
 			}
+		}
+	}
+	
+		static int[] getFarthestCorner(String[][] level, int fromRow, int fromColumn) {
+			//palya lemasolasa
+			String [][] levelCopy = copy(level);
+			// az elsö csillag elhelyezese a celpontra
+			levelCopy[fromRow][fromColumn] = "*";
+			
+			int farthestRow = 0;
+			int farthestColumn = 0;
+			
+			while(spreadAsterisksWithCheck(levelCopy)) {
+				outer: for (int row = 0; row < HEIGHT; row++) {
+					for(int column = 0; column < WIDTH; column++) {
+						if(" ".equals(levelCopy[row][column])) {
+							farthestRow = row;
+							farthestColumn = column;
+							break outer;
+						}
+					}
+				}				
+			}
+			return new int[] {farthestRow, farthestColumn};
+		}
+
+		static Direction getShortestPath(String [][]level,Direction defaultDirection, int fromRow, int fromColumn, int toRow,int toColumn) {
+			//palya lemasolasa
+			String [][] levelCopy = copy(level);
+			// az elsö csillag elhelyezese a celpontra
+			levelCopy[toRow][toColumn] = "*";
+			//*ok terjesztese a szabad helyekre
+			while(spreadAsterisksWithCheck(levelCopy)) {
+//				for (int row = 0; row < HEIGHT; row++) {
+//					for (int column = 0;column < WIDTH; column++) {
+//					   System.out.print(levelCopy[row][column]);			
+//				}	
+//				System.out.println();	
+//			}
+//			//	10 mp-et varakozni fog
+//			try {
+//				Thread.sleep(500L);
+//			} catch (InterruptedException e) {
+//				e.printStackTrace();
+//			}
+				if("*".equals(levelCopy[fromRow-1][fromColumn])) {
+					return Direction.UP;
+				}
+				if("*".equals(levelCopy[fromRow+1][fromColumn])) {
+					return Direction.DOWN;
+				}
+				if("*".equals(levelCopy[fromRow][fromColumn-1])) {
+					return Direction.LEFT;
+				}
+				if("*".equals(levelCopy[fromRow-1][fromColumn+1])) {
+					return Direction.RIGHT;
+				}		
+			  }
+			 return defaultDirection;
 			}
 	
+
+		static boolean spreadAsterisksWithCheck(String[][] levelCopy) {
+			boolean [][] mask = new boolean[HEIGHT][WIDTH];
+			for (int row = 0; row < HEIGHT; row++) {
+				for(int column = 0; column < WIDTH; column++) {
+					if("*".equals(levelCopy[row][column])) {
+						mask [row][column] = true;
+					}
+				}
+			}
+			
+			boolean changed = false;
+			for (int row = 0; row < HEIGHT; row++) {
+				for(int column = 0; column < WIDTH; column++) {
+					if("*".equals(levelCopy[row][column]) && mask [row][column]) {
+						if(" ".equals(levelCopy[row-1][column])) {
+							levelCopy[row-1][column] = "*";
+							changed = true;
+							
+						}
+						if(" ".equals(levelCopy[row+1][column])) {
+							levelCopy[row+1][column] = "*";
+							changed = true;
+						
+						}
+						if(" ".equals(levelCopy[row][column-1])) {
+							levelCopy[row][column-1] = "*";
+							changed = true;
+							
+						}
+						if(" ".equals(levelCopy[row][column+1])) {
+							levelCopy[row][column+1] = "*";
+							changed = true;	
+						}
+					}
+				}		
+			}
+			return changed;
+		}
+
 		static boolean isPassable(String[][] level) {
+			return isPassable(level, false);	
+		}
+
+		static boolean isPassable(String[][] level, boolean draw) {
 			//palya lemasolasa
 			String [][] levelCopy = copy(level);
 			//megkeresem, hogy hol van az elsö szoköz
@@ -150,41 +277,56 @@ public class BasicGame {
 				}
 			}
 			//*ok terjesztese a szabad helyekre
+			while(spreedAsterisks(levelCopy)) {
+				if (draw) {
+				//palyamasolat kirajzolasa
+				for (int row2 = 0; row2 < HEIGHT; row2++) {
+					for (int column2 = 0;column2 < WIDTH; column2++) {
+					   System.out.print(levelCopy[row2][column2]);		
+					}
+				System.out.println();	
+				}
+			  }
+			}
+			
+			//palyamasola tvizsgalata, maradt-e szokoz
+			for (int row=0; row<HEIGHT; row++) {
+				for(int column=0; column<WIDTH; column++) {
+					if(" ".equals(levelCopy[row][column])) {
+						return false;
+					}
+						
+				}
+			}
+		return true;
+		}
+		
+		
+		static boolean spreedAsterisks(String[][] levelCopy) {
+			boolean changed = false;
 			for (int row = 0; row < HEIGHT; row++) {
 				for(int column = 0; column < WIDTH; column++) {
-					boolean change = false;
 					if("*".equals(levelCopy[row][column])) {
 						if(" ".equals(levelCopy[row-1][column])) {
 							levelCopy[row-1][column] = "*";
-							change = true;
+							changed = true;
 						}
 						if(" ".equals(levelCopy[row+1][column])) {
 							levelCopy[row+1][column] = "*";
-							change = true;
+							changed = true;
 						}
 						if(" ".equals(levelCopy[row][column-1])) {
 							levelCopy[row][column-1] = "*";
-							change= true;
+							changed= true;
 						}
 						if(" ".equals(levelCopy[row][column+1])) {
 							levelCopy[row][column+1] = "*";
-							change = true;
+							changed = true;
 						}
 					}
-					if (change) {
-						//palyamasolat kirajzolasa
-						for (int row2 = 0; row2 < HEIGHT; row2++) {
-							for (int column2 = 0;column2 < WIDTH; column2++) {
-							   System.out.print(levelCopy[row2][column2]);		
-							}
-						System.out.println();	
-						}	
-					}
-				}
-			}		
-			//program leallitasa
-			System.exit(0);
-			return false;
+				}		
+			}
+			return changed;
 		}
 
 
@@ -312,7 +454,7 @@ public class BasicGame {
 	//---------------METODUS OVERLOADING---------------
 	//amikor pontosan ua. a neve, csak mas a parameterlistaja
 	static void addRandomWalls(String [][] level) {
-		addRandomWalls(level, 5, 5);
+		addRandomWalls(level, 10, 10);
 	}
 	
 	static void addRandomWalls(String [][] level, int numberOfHorizontalWalls,int numberOfVerticalWalls) {
