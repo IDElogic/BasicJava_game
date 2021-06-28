@@ -3,21 +3,21 @@ import java.util.Random;
 public class BasicGame {
 	
 	//osztalyon belul,(de metodusokon kivul)Osztalyvaltozok_Static ehhez fontos	
-	static final int GAME_LOOP_NUMBER = 100;//statikus meg final is: forditasi ideju konstans
+	static final int GAME_LOOP_NUMBER = 1_000;//statikus meg final is: forditasi ideju konstans
 	static final int HEIGHT = 40;
 	static final int WIDTH = 40;
-//	static final Random RANDOM = new Random	(100L);//álvéletlen számot general
-	static final Random RANDOM = new Random	(100L);
+	static final Random RANDOM = new Random	(101L);//álvéletlen számot general
+
 	
 	public static void main(String[] args) throws InterruptedException {
 		//palya inicializalasa
 				String [][] level = new String [HEIGHT][WIDTH];//helyi valtozo(metoduson belul van letrehozva)
 				int counter = 0;
 				do {
-				initlevel(level); //initlevel metodus meghivas(bemeneti parameterei)	
-				addRandomWalls(level);	
+					initlevel(level); //initlevel metodus meghivas(bemeneti parameterei)	
+					addRandomWalls(level);	
 				counter++;
-				}while (!isPassable(level));
+				} while (!isPassable(level));
 				System.out.println(counter + ". palya atjarhato");
 				isPassable(level, true);
 				
@@ -25,18 +25,17 @@ public class BasicGame {
 		int [] playerStartingCoordinates = getRandomStartingCoordinates(level);
 		int playerRow = playerStartingCoordinates[0];
 		int playerColumn = playerStartingCoordinates[1];		
-		int[]  playerEscapeCoordinates = getFarthestCorner(level,playerRow,playerColumn);
+		int [] playerEscapeCoordinates = getFarthestCorner(level,playerRow,playerColumn);
 		int playerEscapeRow = playerEscapeCoordinates[0];
-		int playerEscapeColumn = playerEscapeCoordinates[1];
-		
-		
+		int playerEscapeColumn = playerEscapeCoordinates[1];		
 		Direction playerDirection = Direction.RIGHT;//helyi valtozo (enum tipusa es a konstansa		
 		
 		//ellenfel
-		String enemyMark = "ö";
+		String enemyMark = "B";
 		int [] enemyStartingCoordinates =  getRandomStartingCoordinatesAtLeastCertainDistance(level,playerStartingCoordinates, 10);
 		int enemyRow = enemyStartingCoordinates[0];
-		int enemyColumn = enemyStartingCoordinates[1];
+		int enemyColumn = enemyStartingCoordinates[1];	
+//		int [] enemyEscapeCoordinates = getFarthestCorner(level,enemyRow,enemyColumn);
 		
 		int [] enemyEscapeCoordinates = getFarthestCorner(level,enemyRow,enemyColumn);
 		int enemyEscapeRow = enemyEscapeCoordinates[0];
@@ -60,19 +59,18 @@ public class BasicGame {
 		//jatekos leptetese
 			if(powerUpActive) {
 //				playerDirection = changeDirectionTowards(level, playerDirection, playerRow,playerColumn, enemyRow, enemyColumn);
-			playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn, enemyRow, enemyColumn);
+				playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn, enemyRow, enemyColumn);
 			}else {
 				if (powerUpPresentOnLevel) {
 //					playerDirection = changeDirectionTowards(level, playerDirection, playerRow,playerColumn,powerUpRow, powerUpColumn);
 					playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn,powerUpRow, powerUpColumn);
 				}else {
 					if(iterationNumber % 50 == 0) {
-//						playerDirection = changeDirection(playerDirection);
 				playerEscapeCoordinates = getFarthestCorner(level,playerRow,playerColumn);
 				playerEscapeRow = playerEscapeCoordinates[0];
 				playerEscapeColumn = playerEscapeCoordinates[1];
 					}
-					playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn,playerEscapeRow, playerEscapeColumn);
+				playerDirection = getShortestPath(level, playerDirection, playerRow, playerColumn,playerEscapeRow, playerEscapeColumn);
 			  }
 			}	
 			//mozgatast vegzo logika
@@ -81,27 +79,26 @@ public class BasicGame {
 			playerColumn = playerCoordinates[1];
 			
 			//ellenfel leptetese
-		
 			if(powerUpActive) {
 //				Direction directionTowardsPlayer= changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
-//				enemyDirection = getEscapeDirection(level, enemyRow, enemyColumn, directionTowardsPlayer);
+//				enemyDirection = getEscapeDirection(level, enemyRow, enemyColumn, directionTowardsPlayer);	
 				
-				if(iterationNumber % 50 == 0) {
+				if(iterationNumber % 100 == 0) {
 				enemyEscapeCoordinates = getFarthestCorner(level,enemyRow,enemyColumn);
 				enemyEscapeRow = enemyEscapeCoordinates[0];
 				enemyEscapeColumn = enemyEscapeCoordinates[1];
 				}
-				enemyDirection = getShortestPath(level, enemyDirection, enemyRow, enemyColumn, enemyEscapeRow, enemyEscapeColumn);
+				enemyDirection = getShortestPath (level,enemyDirection, enemyRow, enemyColumn, enemyEscapeRow, enemyEscapeColumn);	
+			
 			} else {
-//				enemyDirection = changeDirectionTowards(level,enemyDirection,enemyRow, enemyColumn, playerRow, playerColumn);
-				enemyDirection = getShortestPath(level, enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);
+//				enemyDirection = changeDirectionTowards(level,enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);	
+				enemyDirection = getShortestPath (level,enemyDirection, enemyRow, enemyColumn, playerRow, playerColumn);	
 			}
-			if(iterationNumber % 2 == 0) {
+//			if(iterationNumber % 2 == 0) {
 				int[] enemyCoordinates = makeMove(enemyDirection, level,enemyRow, enemyColumn);
 				enemyRow = enemyCoordinates[0];
 				enemyColumn = enemyCoordinates[1];
-				}
-				
+//			}		
 			//powerUp frissitese
 			if (powerUpActive) {
 				powerUpActiveCounter++;
@@ -121,8 +118,14 @@ public class BasicGame {
 				powerUpActive = false;
 				powerUpActiveCounter = 0;
 				powerUpStartingCoordinates = getRandomStartingCoordinates(level);
-				powerUpRow = powerUpStartingCoordinates[0];//helyi valtozo
-				powerUpColumn = powerUpStartingCoordinates[1];//helyi valtozo
+				powerUpRow = powerUpStartingCoordinates[0];
+				powerUpColumn = powerUpStartingCoordinates[1];
+				
+				playerEscapeCoordinates = getFarthestCorner(level,playerRow,playerColumn);
+				playerEscapeRow = playerEscapeCoordinates[0];
+				playerEscapeColumn = playerEscapeCoordinates[1];
+				
+				
 			}
 			
 			//	jatekos powerUp interakcio lekezelese
@@ -130,6 +133,9 @@ public class BasicGame {
 				powerUpActive = true;
 				powerUpPresentOnLevel = false;
 				powerUpPresenceCounter = 0;
+				enemyEscapeCoordinates = getFarthestCorner(level,enemyRow,enemyColumn);
+				enemyEscapeRow = enemyEscapeCoordinates[0];
+				enemyEscapeColumn = enemyEscapeCoordinates[1];
 				
 			}
 			//palya es jatekos kirajzolasa
@@ -148,24 +154,24 @@ public class BasicGame {
 				break;
 			}
 			switch (gameResult) {
-			case WIN:
-			  System.out.println("Gratulalok! Gyöztel! ");
-			break;
-			case LOSE:
-			  System.out.println(" Sajnalom,vesztettel! ");
-			break;
-			case TIE:
-				 System.out.println("Döntetlen! ");
-			break;
+				case WIN:
+				  System.out.println("Gratulalok! Gyöztel! ");
+				break;
+				case LOSE:
+				  System.out.println(" Sajnalom,vesztettel! ");
+				break;
+				case TIE:
+					 System.out.println("Döntetlen!");
+				break;
 			
 			}
 		}
 	}
 	
 		static int[] getFarthestCorner(String[][] level, int fromRow, int fromColumn) {
-			//palya lemasolasa
+//palya lemasolasa
 			String [][] levelCopy = copy(level);
-			// az elsö csillag elhelyezese a celpontra
+// az elsö csillag elhelyezese a celpontra
 			levelCopy[fromRow][fromColumn] = "*";
 			
 			int farthestRow = 0;
@@ -183,91 +189,90 @@ public class BasicGame {
 				}				
 			}
 			return new int[] {farthestRow, farthestColumn};
-		}
-
-		static Direction getShortestPath(String [][]level,Direction defaultDirection, int fromRow, int fromColumn, int toRow,int toColumn) {
-			//palya lemasolasa
+		}		
+		
+		static Direction getShortestPath(String [][]level, Direction defaultDirection, int fromRow, int fromColumn, int toRow,int toColumn) {
+//palya lemasolasa
 			String [][] levelCopy = copy(level);
-			// az elsö csillag elhelyezese a celpontra
-			levelCopy[toRow][toColumn] = "*";
-			//*ok terjesztese a szabad helyekre
-			while(spreadAsterisksWithCheck(levelCopy)) {
+			
+// az elsö csillag lehelyezese a celpontra
+			levelCopy[toRow][toColumn] = "*";			
+			
+//*ok terjesztese ujra a szabad helyekre!!!!!!!
+			while (spreadAsterisksWithCheck(levelCopy)) {		
 //				for (int row = 0; row < HEIGHT; row++) {
 //					for (int column = 0;column < WIDTH; column++) {
-//					   System.out.print(levelCopy[row][column]);			
-//				}	
+//					   System.out.print(levelCopy[row][column]);
+//					}
 //				System.out.println();	
-//			}
-//			//	10 mp-et varakozni fog
-//			try {
+//				}
+//				try {
 //				Thread.sleep(500L);
-//			} catch (InterruptedException e) {
-//				e.printStackTrace();
-//			}
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
 				if("*".equals(levelCopy[fromRow-1][fromColumn])) {
-					return Direction.UP;
-				}
+							return Direction.UP;
+						}
 				if("*".equals(levelCopy[fromRow+1][fromColumn])) {
-					return Direction.DOWN;
-				}
+							return Direction.DOWN;
+						}
 				if("*".equals(levelCopy[fromRow][fromColumn-1])) {
-					return Direction.LEFT;
+							return Direction.LEFT;
+						}
+				if("*".equals(levelCopy[fromRow][fromColumn+1])) {
+							return Direction.RIGHT;
+						}		
 				}
-				if("*".equals(levelCopy[fromRow-1][fromColumn+1])) {
-					return Direction.RIGHT;
-				}		
-			  }
 			 return defaultDirection;
 			}
 	
-
 		static boolean spreadAsterisksWithCheck(String[][] levelCopy) {
-			boolean [][] mask = new boolean[HEIGHT][WIDTH];
+			boolean [][]mask = new boolean [HEIGHT][WIDTH];
 			for (int row = 0; row < HEIGHT; row++) {
 				for(int column = 0; column < WIDTH; column++) {
 					if("*".equals(levelCopy[row][column])) {
-						mask [row][column] = true;
+						mask [row][column]=  true;
 					}
 				}
 			}
-			
 			boolean changed = false;
 			for (int row = 0; row < HEIGHT; row++) {
 				for(int column = 0; column < WIDTH; column++) {
 					if("*".equals(levelCopy[row][column]) && mask [row][column]) {
 						if(" ".equals(levelCopy[row-1][column])) {
-							levelCopy[row-1][column] = "*";
-							changed = true;
-							
+							          levelCopy[row-1][column] = "*";
+							          changed = true;	
 						}
 						if(" ".equals(levelCopy[row+1][column])) {
-							levelCopy[row+1][column] = "*";
-							changed = true;
+							          levelCopy[row+1][column] = "*";
+							          changed = true;
 						
 						}
 						if(" ".equals(levelCopy[row][column-1])) {
-							levelCopy[row][column-1] = "*";
-							changed = true;
+							          levelCopy[row][column-1] = "*";
+							          changed = true;
 							
 						}
 						if(" ".equals(levelCopy[row][column+1])) {
-							levelCopy[row][column+1] = "*";
-							changed = true;	
+									  levelCopy[row][column+1] = "*";
+									  changed = true;	
 						}
 					}
 				}		
 			}
-			return changed;
+			return changed ;
 		}
-
+		
 		static boolean isPassable(String[][] level) {
 			return isPassable(level, false);	
 		}
 
 		static boolean isPassable(String[][] level, boolean draw) {
-			//palya lemasolasa
+//palya lemasolasa
 			String [][] levelCopy = copy(level);
-			//megkeresem, hogy hol van az elsö szoköz
+			
+//megkeresem, hogy hol van az elsö szoköz
 			outer: for (int row=0; row<HEIGHT; row++) {
 				for(int column=0; column<WIDTH; column++) {
 					if(" ".equals(levelCopy[row][column])) {
@@ -276,34 +281,31 @@ public class BasicGame {
 					}
 				}
 			}
-			//*ok terjesztese a szabad helyekre
-			while(spreedAsterisks(levelCopy)) {
+//*ok terjesztese a szabad helyekre	
+			while(spreedAsterisks(levelCopy)) {	
 				if (draw) {
-				//palyamasolat kirajzolasa
-				for (int row2 = 0; row2 < HEIGHT; row2++) {
-					for (int column2 = 0;column2 < WIDTH; column2++) {
-					   System.out.print(levelCopy[row2][column2]);		
+//palyamasolat kirajzolasa
+				for (int row = 0; row < HEIGHT; row++) {
+					for (int column = 0;column < WIDTH; column++) {					
+						System.out.print(levelCopy[row][column]);
 					}
-				System.out.println();	
+					System.out.println();
 				}
 			  }
 			}
-			
-			//palyamasola tvizsgalata, maradt-e szokoz
+//palyamasolat vizsgalata, maradt-e szokoz
 			for (int row=0; row<HEIGHT; row++) {
 				for(int column=0; column<WIDTH; column++) {
 					if(" ".equals(levelCopy[row][column])) {
 						return false;
-					}
-						
+					}		
 				}
-			}
+			}			
 		return true;
 		}
 		
-		
 		static boolean spreedAsterisks(String[][] levelCopy) {
-			boolean changed = false;
+			boolean changed = false;		
 			for (int row = 0; row < HEIGHT; row++) {
 				for(int column = 0; column < WIDTH; column++) {
 					if("*".equals(levelCopy[row][column])) {
@@ -400,7 +402,6 @@ public class BasicGame {
 			}		
 		}
 
-/*--------METODUSOK----------------*/
 		static int[]  getRandomStartingCoordinatesAtLeastCertainDistance(String[][] level, int[] playerStartingCoordinates, int distance) {
 		int playerStartingRow = playerStartingCoordinates [0];
 		int playerStartingColumn = playerStartingCoordinates [1];
@@ -411,7 +412,7 @@ public class BasicGame {
 			randomRow = RANDOM.nextInt(HEIGHT);
 			randomColumn = RANDOM.nextInt(WIDTH);	
 		} while(counter++ < 1_000 
-				&& (!level[randomRow][randomColumn].equals(" ") || calculateDistance(randomRow, randomColumn, playerStartingRow, playerStartingColumn)<10));
+				&& (!level[randomRow][randomColumn].equals(" ") || calculateDistance(randomRow, randomColumn, playerStartingRow, playerStartingColumn)< 10));
 		return new int [] {randomRow,randomColumn};
 		
 	}
@@ -451,8 +452,8 @@ public class BasicGame {
 			return originalEnemyDirection;
 	}
 	
-	//---------------METODUS OVERLOADING---------------
-	//amikor pontosan ua. a neve, csak mas a parameterlistaja
+//METODUS OVERLOADING
+//amikor pontosan ua. a neve, csak mas a parameterlistaja
 	static void addRandomWalls(String [][] level) {
 		addRandomWalls(level, 10, 10);
 	}
@@ -582,6 +583,17 @@ public class BasicGame {
 }
 		
 
-	
+//for (int row = 0; row < HEIGHT; row++) {
+//for(int column = 0; column < WIDTH; column++) {
+//   System.out.print(levelCopy[row][column]);			
+//}	
+//System.out.println();	
+//}
+////	10 mp-et varakozni fog
+//try {
+//Thread.sleep(500L);
+//} catch (InterruptedException e) {
+//e.printStackTrace();
+//}
 	
 
